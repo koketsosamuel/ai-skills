@@ -44,6 +44,16 @@ Distinctive, intentional visual design for new UI — adapted from [Anthropic's 
 - **Extended AI-default tells** — beyond the three classic looks: purple-gradient SaaS, Inter-for-everything, uniform rounded-card grids, bento-by-default, gradient hero text, emoji as icons.
 - A deliberate **light/dark stance** as part of the plan.
 
+### [`landing-trio/`](landing-trio/SKILL.md)
+
+Design a stunning, mobile-first **landing page by options, not by fiat** — built on `frontend-design`:
+
+- **Intake** the subject, audience, and the page's ONE conversion job.
+- **Pick three genuinely divergent style directions** that fit the subject (editorial, brutalist, luxury, playful, technical, retro, …) — different palette, type, layout, motion, and signature per direction; never three tints of one design, never an AI-default look.
+- **Build three complete, self-contained variant pages** in parallel (mobile-first gate: every variant must sell at 375px).
+- **Show them side by side** — a `compare.html` strip plus mobile + desktop screenshots of each, verified rendered before presenting.
+- **The user picks** (or mixes: "A's layout with C's palette"), then the winner is **fully implemented** in the real target — framework/design-system conventions, real CTA, SEO/OG meta — and verified by rendering.
+
 ## Installing a skill
 
 Copy a skill directory into your Claude Code skills folder:
