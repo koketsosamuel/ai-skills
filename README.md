@@ -33,6 +33,17 @@ Turn a fuzzy feature request into the **implementation-ready phase docs** that `
 - **Write** one markdown doc per phase using a canonical anatomy: Objective, Context, Scope (+ out-of-scope), Misconceptions & gotchas, Design decisions, checkbox Tasks and Acceptance checks, Phase gate, Open decisions.
 - **Surface** the architecture-deciding open questions to the user (with recommended defaults) before committing, then **commit + push the docs** — that's the deliverable; it never writes feature code or invokes `orcaz` itself.
 
+### [`frontend-design/`](frontend-design/SKILL.md)
+
+Distinctive, intentional visual design for new UI — adapted from [Anthropic's official skill](https://github.com/anthropics/skills/tree/main/skills/frontend-design) (Apache 2.0, modified) with these additions:
+
+- **Greenfield vs existing product** — in a codebase with a design system, the system wins; distinctiveness is spent within its tokens, never against them.
+- **Environment check for fonts/assets** — CSP-sandboxed artifacts and offline products can't reach CDNs; verify the display face actually loads.
+- **Concrete craft floor** — WCAG AA contrast numbers, 45–75ch measure, one spacing scale, semantic HTML, keyboard + reduced-motion.
+- **Verify by rendering** — screenshot mobile + desktop, check the console, stress with real/long content; then remove one accessory.
+- **Extended AI-default tells** — beyond the three classic looks: purple-gradient SaaS, Inter-for-everything, uniform rounded-card grids, bento-by-default, gradient hero text, emoji as icons.
+- A deliberate **light/dark stance** as part of the plan.
+
 ## Installing a skill
 
 Copy a skill directory into your Claude Code skills folder:
