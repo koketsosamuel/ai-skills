@@ -35,7 +35,7 @@ Choose 3 styles **that fit the subject** from across the spectrum — e.g. edito
 
 - Each variant is a **complete, self-contained landing page** — full page (hero → proof → features/story → CTA → footer as the subject demands), real copy per the writing rules, inline CSS/assets so it opens anywhere. Not a mood board, not a hero-only teaser: the user must be able to judge the whole page.
 - Files: `<dir>/variant-a-<style>.html`, `variant-b…`, `variant-c…` in the project (or scratch dir for throwaway comparisons).
-- **Fan out three BUILDER subagents in parallel** (disjoint files; each gets the shared brief + its own token plan) or build serially if the environment lacks agents. Each variant honors the full craft floor: AA contrast, 45–75ch, one spacing scale, semantic HTML, keyboard + focus, `prefers-reduced-motion`, **no horizontal scroll at 360px, tap targets ≥ 44px, fluid type via `clamp()`**, lightweight (no heavy frameworks for a static page; lazy-load below-the-fold images).
+- **Fan out three `opus` subagents in parallel** (disjoint files; each gets the shared brief + its own token plan) or build serially if the environment lacks agents. Design work runs on **opus, always** — never sonnet/haiku for variant builds or the final implementation; visual taste is exactly where the stronger model earns its cost. Each variant honors the full craft floor: AA contrast, 45–75ch, one spacing scale, semantic HTML, keyboard + focus, `prefers-reduced-motion`, **no horizontal scroll at 360px, tap targets ≥ 44px, fluid type via `clamp()`**, lightweight (no heavy frameworks for a static page; lazy-load below-the-fold images).
 
 ## 4. Show them side by side
 
@@ -61,6 +61,7 @@ Ask with `AskUserQuestion` — one option per variant (name + one-line pitch + t
 - **Mobile-first is a gate, not a feature** — every variant must sell at 375px or it doesn't get shown.
 - **The user's pick is the spec** — implement the chosen direction faithfully; don't sneak back your own favorite.
 - **frontend-design's rules ride along** — subject-grounded, no default looks, one signature, craft floor, copy as design material.
+- **Opus for design work** — variant builds and the winner's implementation run on `opus` subagents; cheaper models only for mechanical chores (screenshotting, file shuffling).
 - **Context economy** — subagents return file paths + screenshot paths + a one-line self-critique, not HTML dumps.
 
 ## Anti-patterns
