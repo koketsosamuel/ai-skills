@@ -23,6 +23,16 @@ Orchestrate a large / multi-phase feature build as the **conductor of subagents*
 
 A short sound plays when a phase lands and again when the work ships.
 
+### [`orcaz-plan/`](orcaz-plan/SKILL.md)
+
+Turn a fuzzy feature request into the **implementation-ready phase docs** that `orcaz` builds from:
+
+- **Recon** the codebase first — real conventions, exemplar files to mirror, migration numbering, test gates. Phases cite real paths, never assumptions.
+- **Research** the problem space (web + in-repo, fan-out): common misconceptions, expert advice from primary sources, version-specific footguns — adversarially verifying load-bearing claims. The gotchas shape the phase boundaries.
+- **Decompose** into right-sized, dependency-ordered, individually-shippable slices (paired API-before-web where the repo does that).
+- **Write** one markdown doc per phase using a canonical anatomy: Objective, Context, Scope (+ out-of-scope), Misconceptions & gotchas, Design decisions, checkbox Tasks and Acceptance checks, Phase gate, Open decisions.
+- **Surface** the architecture-deciding open questions to the user (with recommended defaults) before committing, then **commit + push the docs** — that's the deliverable; it never writes feature code or invokes `orcaz` itself.
+
 ## Installing a skill
 
 Copy a skill directory into your Claude Code skills folder:
