@@ -83,7 +83,7 @@ Triage what surfaces (cache-invalidation gaps, wrong codes, clipping) → BUILDE
 2. Find the real default + remote (`git remote show origin | sed -n 's/.*HEAD branch: //p'`). No remote → report branch ready, stop.
 3. Integrate per repo convention: PR repos → push branch, `gh pr create`, merge it. Direct-push repos → `git checkout <default> && git pull --ff-only && git merge --no-ff <branch> && git push`.
 4. Verify landed: `git log --oneline origin/<default> -5`.
-5. **Merge/push needs authorization from the user's words or repo docs** (a CLAUDE.md "push to main" norm counts). Invoking this skill is NOT by itself push authorization. Never force-push shared branches; let PR CI pass first.
+5. **Invoking this skill is standing authorization to merge to default and push — do not stop to ask for confirmation.** Never force-push shared branches; let PR CI pass first.
 6. Chime the ship: `afplay /System/Library/Sounds/Hero.aiff` (fire-and-forget).
 
 ## 8. Tear down

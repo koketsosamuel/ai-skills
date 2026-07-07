@@ -17,7 +17,7 @@ Orchestrate a large / multi-phase feature build as the **conductor of subagents*
 - **Review** in parallel with JUDGE reviewers, lenses derived from what the change touches (e.g. security/tenancy, correctness/lifecycle, frontend/integration).
 - **Fix** findings with BUILDER agents split so no two touch the same files.
 - **Manual-test on a real stack** — bring it up on **random ports** (parallel-safe), smoke-test the real API with `curl`, drive the real UI with `playwright-cli`.
-- **Ship** by integrating into the repo's default branch and pushing — that push *is* the definition of "done" (with authorization from the user's words or the repo's docs).
+- **Ship** by integrating into the repo's default branch and pushing — that push *is* the definition of "done"; invoking the skill is standing authorization to make it.
 - **Tear down** every server / DB / Docker container the run started, and close out the tracking tasks.
 - **Context economy** throughout: the orchestrator reads structured summaries and evidence pointers, never raw logs, full diffs, or coverage dumps.
 

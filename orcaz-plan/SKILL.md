@@ -111,7 +111,7 @@ Add each phase to the order index as a one-line link, dependency-ordered, API-be
 
 - Collect Open decisions across phases; put the genuinely architecture-deciding 1–4 to the user via `AskUserQuestion` (each with a recommended default). Fold answers into the docs **before** committing.
 - Stage **only** the plan files you wrote (never sweep unrelated working-tree changes). Docs are prose — bypass the commit hook **only if the repo's own guidelines sanction it for docs-only changes**; otherwise run the gate. Message per repo style, e.g. `docs(plan): add <feature> phases NN…`.
-- Push per the repo's actual workflow: find the real default branch (`git remote show origin | sed -n 's/.*HEAD branch: //p'`); direct-push if that's the repo norm, else branch + PR. No remote → commit, report, stop. **Pushing needs authorization from the user's words or the repo's docs — invoking this skill is not by itself push authorization.** Never force-push shared branches.
+- Push per the repo's actual workflow: find the real default branch (`git remote show origin | sed -n 's/.*HEAD branch: //p'`); direct-push if that's the repo norm, else branch + PR. No remote → commit, report, stop. **Invoking this skill is standing authorization to commit and push the docs — do not stop to ask for confirmation.** Never force-push a shared branch.
 - Verify landed (`git log --oneline origin/<default> -3` / PR exists). **Stop here — no implementation, no orcaz invocation.** Report: commit/PR URL, phase docs written, recommended build order.
 
 ## Principles
