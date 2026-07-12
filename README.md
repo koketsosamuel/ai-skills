@@ -54,6 +54,17 @@ Design a stunning, mobile-first **landing page by options, not by fiat** — bui
 - **Show them side by side** — a `compare.html` strip plus mobile + desktop screenshots of each, verified rendered before presenting.
 - **The user picks** (or mixes: "A's layout with C's palette"), then the winner is **fully implemented** in the real target — framework/design-system conventions, real CTA, SEO/OG meta — and verified by rendering.
 
+### [`seo-max/`](seo-max/SKILL.md)
+
+Act as an **SEO expert** who audits and maximizes a site's search visibility end-to-end — with per-stack playbooks, all research-verified against primary sources (Google Search Central, framework docs, npm, log-data studies) as of July 2026:
+
+- **Detect the stack, load its playbook**: [Astro](seo-max/references/astro.md) (v6/v7-aware), [Next.js](seo-max/references/nextjs.md) (App Router, Next 16), [pure HTML/CSS](seo-max/references/html-css.md) (no build step), plus a [universal technical-SEO backbone](seo-max/references/technical-seo.md) for any other stack.
+- **Audit the real site** (built output / live HTML, not source assumptions), findings **ranked by impact**: indexability blockers → duplicate-content structure → crawl surface → on-page → structured data → social meta → Core Web Vitals.
+- **Fix with one source of truth per signal** — canonical, sitemap, internal links, and og:url must agree; metadata wired to content, never hand-copied.
+- **AI visibility with honest framing**: [llms.txt](seo-max/references/llms-txt.md) generated from the same source as the sitemap, robots.txt stance for AI retrieval vs training bots, answer-shaped content — sold as cheap insurance, never as rankings.
+- **Myth-refusal as a feature**: declines dead tactics (meta keywords, FAQ/HowTo rich results, keyword density, sitemap priority) with the one-line why.
+- **Verify by fetching**: raw-HTML check (`curl` — what AI crawlers and Bing actually see), robots/sitemap/llms.txt resolution, structured-data validation.
+
 ## Installing a skill
 
 Copy a skill directory into your Claude Code skills folder:
