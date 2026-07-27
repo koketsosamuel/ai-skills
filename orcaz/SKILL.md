@@ -61,7 +61,7 @@ Builds and test suites are the RAM hogs; parallelism *there* is what kills the m
 Accuracy comes from *what* gets verified, not from making everything wait its turn. Every barrier below is one you don't need:
 
 - **Warm the stack from minute one.** Infra pull/up (db/redis/object-store) depends on nothing you're about to write — start it **backgrounded during §1** so §6 finds it hot instead of paying docker cold-start after review. Migrate + seed later, once schema lands.
-- **Roll the review forward.** A batch that checkpointed is reviewable *now*, while the next batch is still being implemented (§4) — findings arrive earlier and cheaper. One final integration-lens pass over the whole diff still catches the cross-phase issues a per-batch review can't see.
+- **Review once, over the whole diff** (§4) — after every phase has landed. Per-batch reviews look faster but re-read the same code repeatedly, and findings on a half-built feature are noise. The parallelism that matters here is *across lenses*, not across time.
 - **Fail fast, cheap check first.** Verifier order is always **typecheck → affected tests → build**, `--bail=1` on the first pass. A broken batch dies in seconds, not after a four-minute suite.
 - **Affected tests at checkpoints; the full suite exactly once, pre-ship** (§7.1). Scoped runs (`vitest --changed`, `jest --findRelatedTests <files>`) at each gate; the one full run before merge is the net that makes that safe.
 - **Batch by layer, not by pair.** All API phases → **one** codegen → all web phases, rather than regenerating the client per API/web pair.
@@ -75,8 +75,7 @@ spec → branch + brief + tasks ─┬─ [background] infra warm-up ───�
   └─ per phase batch (serial if dependent, parallel if disjoint):             │
        implement + UNIT TEST (BUILDER, pointed at brief + spec)               │
        → CHECKPOINT: VERIFIER re-runs typecheck → affected tests → build → commits
-       → ROLLING REVIEW of that batch's diff (parallel REVIEWER lenses) ─┐    │
-  → final integration-lens review over the full diff ──────────────────┘      │
+  → review the full diff (parallel REVIEWER lenses, one round)                │
   → triage → fix in-scope (BUILDER, no shared files) → re-verify → commits    │
        → out-of-scope findings → the findings doc (§5b)                       │
   → manual test on the ALREADY-WARM stack: ←──────────────────────────────────┘
@@ -115,9 +114,7 @@ Never trust an implementer's "all green". **One checkpoint per batch of phases**
 
 ## 4. Review (parallel REVIEWERs, `opus`, read-only, by lens)
 
-**Roll it forward, don't save it up.** As each batch checkpoints, spawn its reviewers against *that batch's* diff (`git diff <prev-checkpoint>..HEAD`) while the next batch is still being implemented — findings land early, and fixes fold into the next checkpoint instead of becoming their own round. Then **one final pass over the whole diff** (`git diff <base>..HEAD`) with an integration/cross-phase lens, which is the only thing a per-batch review structurally cannot see.
-
-Spawn reviewers **in one message**, each a different lens, read-only, verifying against the diff + spec. **Derive lenses from what the change touches**; typical full-stack trio: security/tenancy·RLS, correctness/lifecycle (state machines, async/queues, idempotency, migrations up+down), frontend/integration (cache invalidation, generated client, a11y). Demand structured findings, one line each: `[Severity] file:line — issue — why — fix`, plus an `IN-SCOPE / OUT-OF-SCOPE` tag per finding; cap at the top ~10 per lens. If the harness offers the **Workflow tool**, the review→verify fan-out fits it well (invoking this skill is the orchestration opt-in).
+**One round, after every phase has landed** — reviewers read the complete diff (`git diff <base>..HEAD`), not a moving target. Spawn them **in one message**, each a different lens, read-only, verifying against the diff + spec. **Derive lenses from what the change touches**; typical full-stack trio: security/tenancy·RLS, correctness/lifecycle (state machines, async/queues, idempotency, migrations up+down), frontend/integration (cache invalidation, generated client, a11y). Demand structured findings, one line each: `[Severity] file:line — issue — why — fix`, plus an `IN-SCOPE / OUT-OF-SCOPE` tag per finding; cap at the top ~10 per lens. If the harness offers the **Workflow tool**, the review→verify fan-out fits it well (invoking this skill is the orchestration opt-in).
 
 ## 5. Fix (BUILDER, no file overlap)
 
@@ -187,11 +184,11 @@ After the push: kill every server/worker/dev-server and background shell this ru
 - **Terse up, verbose down** — milestone lines to the user; full context to subagents, written once in the brief.
 - **Context economy:** summaries and pointers up; never raw logs into the orchestrator.
 - **One heavy job at a time:** parallel edits, serialized builds/suites, batched gates.
-- **Overlap what doesn't depend** — warm the stack early, review as batches land, fail fast on the cheap check. Speed comes from removing barriers, never from skipping verification.
+- **Overlap what doesn't depend** — warm the stack early, fail fast on the cheap check, parallelize across lenses. Speed comes from removing barriers, never from skipping verification.
 - **Found ≠ fixed, but found ≠ forgotten** — out-of-scope bugs get logged, not silently fixed or dropped.
 - **No-overlap parallelism**; **right-size the slices**; **honest reporting** (tested vs untested + why); **scale effort to the ask**.
 - **Finish the job** (merged + pushed = done) and **leave no mess** (teardown + closed tasks).
 
 ## Anti-patterns
 
-Trusting "all green" without a verifier re-run · `cat`-ing or whole-file-`Read`ing a log — at any tier, and especially for a run that passed · parallel agents each running the full suite (RAM death) · a gate run per file instead of per batch · a four-minute suite run before a two-second typecheck · docker cold-start discovered at §6 instead of warmed at §1 · saving every review finding for one big round at the end · codegen re-run per API/web pair · clean rebuilds / dep reinstalls "to be safe" · repeating shared context in every subagent prompt instead of the brief · narrating progress to the user · parallel agents editing one file · "tested" = mocks only, app never started · "tested" = stack only, new code uncovered / happy-path-only tests · screenshot-only UI claims · silently expanding scope to fix an unrelated bug — or dropping it instead of logging it · leaving cross-phase breakage for the next agent · reading full logs/diffs into the orchestrator context.
+Trusting "all green" without a verifier re-run · `cat`-ing or whole-file-`Read`ing a log — at any tier, and especially for a run that passed · parallel agents each running the full suite (RAM death) · a gate run per file instead of per batch · a four-minute suite run before a two-second typecheck · docker cold-start discovered at §6 instead of warmed at §1 · codegen re-run per API/web pair · clean rebuilds / dep reinstalls "to be safe" · repeating shared context in every subagent prompt instead of the brief · narrating progress to the user · parallel agents editing one file · "tested" = mocks only, app never started · "tested" = stack only, new code uncovered / happy-path-only tests · screenshot-only UI claims · silently expanding scope to fix an unrelated bug — or dropping it instead of logging it · leaving cross-phase breakage for the next agent · reading full logs/diffs into the orchestrator context.
