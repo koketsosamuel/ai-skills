@@ -33,7 +33,7 @@ shipped ✅ main@ef01234
 Builds and test suites are the RAM hogs; parallelism *there* is what kills the machine, not parallel editing.
 
 - **One heavy job at a time.** Parallel BUILDERs edit disjoint files but must **not** each run the full suite — implementers run only their slice's tests, path-filtered. Full suite + build = the verifier's job, once per batch.
-- **Cap workers, don't let the runner autodetect cores**: `vitest --pool=forks --poolOptions.forks.maxForks=2` / `jest --maxWorkers=2` (`--runInBand` if RAM is tight), `NODE_OPTIONS=--max-old-space-size=4096`. Put the exact command in the brief so every agent uses it.
+- **Cap workers at 4, don't let the runner autodetect cores**: `vitest --pool=forks --poolOptions.forks.maxForks=4` / `jest --maxWorkers=4`. Drop to **2** while a dev stack is up or for jsdom/React suites; `--runInBand` for the one integration suite that still OOMs. Heap cap is **per process, workers included** — `NODE_OPTIONS=--max-old-space-size=2048` (4×2 GB), not 4096; bump only the *build* process if a build is what OOMs. Put the exact command in the brief so every agent uses it.
 - **Batch checkpoints.** Verify + commit once per batch of independent phases, not once per agent — each commit costs a full gate run.
 - **Don't double-run the gate.** If the pre-commit hook runs lint+test, let it; don't run the same suite manually first.
 - **Incremental, not clean.** `tsc -b` / cached builds; never reinstall deps or wipe build caches to "be safe".
