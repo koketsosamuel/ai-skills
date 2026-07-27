@@ -50,18 +50,33 @@ Builds and test suites are the RAM hogs; parallelism *there* is what kills the m
 - **Incremental, not clean.** `tsc -b` / cached builds; never reinstall deps or wipe build caches to "be safe".
 - **Stack up once** (§6), shared by API and UI passes, torn down at the end — never per subagent. Stop dev servers before a full-suite run if memory is tight.
 
+### 0c. Critical path — overlap what doesn't depend
+
+Accuracy comes from *what* gets verified, not from making everything wait its turn. Every barrier below is one you don't need:
+
+- **Warm the stack from minute one.** Infra pull/up (db/redis/object-store) depends on nothing you're about to write — start it **backgrounded during §1** so §6 finds it hot instead of paying docker cold-start after review. Migrate + seed later, once schema lands.
+- **Roll the review forward.** A batch that checkpointed is reviewable *now*, while the next batch is still being implemented (§4) — findings arrive earlier and cheaper. One final integration-lens pass over the whole diff still catches the cross-phase issues a per-batch review can't see.
+- **Fail fast, cheap check first.** Verifier order is always **typecheck → affected tests → build**, `--bail=1` on the first pass. A broken batch dies in seconds, not after a four-minute suite.
+- **Affected tests at checkpoints; the full suite exactly once, pre-ship** (§7.1). Scoped runs (`vitest --changed`, `jest --findRelatedTests <files>`) at each gate; the one full run before merge is the net that makes that safe.
+- **Batch by layer, not by pair.** All API phases → **one** codegen → all web phases, rather than regenerating the client per API/web pair.
+- **Pipeline, don't barrier.** Where the harness offers the **Workflow tool**, `pipeline()` these stages — an item that finishes stage 1 moves on rather than waiting for its slowest sibling. Barrier only where a stage genuinely needs *all* of the previous one (dedup across findings, an early-exit count).
+
 ## The loop
 
 ```
-spec → branch + brief + tasks
-  └─ per phase batch (serial if dependent, parallel if disjoint):
-       implement + UNIT TEST (BUILDER, pointed at brief + spec — code AND tests together)
-       → CHECKPOINT (per batch): JUDGE verifier re-runs build + tests + coverage → commits
-  → review (parallel JUDGE reviewers by lens, read-only)
-  → triage → fix in-scope (BUILDER, no shared files) → JUDGE re-verifies → commits
-       → log out-of-scope findings to the findings doc (§5b)
-  → manual test: JUDGE brings up stack + curls REAL API; BUILDER drives REAL UI (playwright-cli)
+spec → branch + brief + tasks ─┬─ [background] infra warm-up ─────────────────┐
+                               └─ recon fan-out                               │
+  └─ per phase batch (serial if dependent, parallel if disjoint):             │
+       implement + UNIT TEST (BUILDER, pointed at brief + spec)               │
+       → CHECKPOINT: JUDGE re-runs typecheck → affected tests → build → commits
+       → ROLLING REVIEW of that batch's diff (parallel JUDGE lenses) ──┐      │
+  → final integration-lens review over the full diff ─────────────────-┘      │
+  → triage → fix in-scope (BUILDER, no shared files) → re-verify → commits    │
+       → out-of-scope findings → the findings doc (§5b)                       │
+  → manual test on the ALREADY-WARM stack: ←──────────────────────────────────┘
+       JUDGE migrates/seeds + curls REAL API; BUILDER drives REAL UI (playwright-cli)
        → fix breaks (BUILDER) → JUDGE re-verifies → commits
+  → PRE-SHIP: full suite + full build, once
   → SHIP: YOU merge to the repo's DEFAULT branch and push
   → TEAR DOWN: stop everything started + close tracking tasks
 ```
@@ -70,7 +85,9 @@ Track phases with TaskCreate/TaskUpdate.
 
 ## 1. Set up
 
-Branch first (`git checkout -b feat/<x>`) — never build big on default. Recon the repo: package manager, build/lint/test/codegen commands, migrations, how the app launches. Write the brief (§0).
+Branch first (`git checkout -b feat/<x>`) — never build big on default. Recon the repo (fan out if it's big): package manager, build/lint/test/codegen commands, migrations, how the app launches. Write the brief (§0).
+
+**Kick off infra warm-up here, backgrounded** — `docker compose up -d` the db/redis/object-store on this run's unique names/ports (§6a), fire-and-forget, while recon and implementation proceed. Record the ports in the brief. Nothing downstream blocks on it until §6.
 
 ## 2. Implement + unit-test (BUILDER subagents)
 
@@ -79,11 +96,11 @@ Branch first (`git checkout -b feat/<x>`) — never build big on default. Recon 
 - Serial where phases share files or migration numbers; parallel only with disjoint file sets.
 - **Tests ship with the code — not a later phase.** Require good coverage of the new logic: every branch, error path, gate (assert exact HTTP status), state transition — not just happy path. Push logic into pure IO-free functions. Agent runs **its slice's tests only** (path-filtered, capped workers) and reports numbers.
 - Prompt must include: brief path, spec file **paths**, "discover real state first" (latest migration number, existing helpers, test runner), and the **report schema**: files changed, commands + PASS/FAIL, coverage % for new files, untested + why, deviations, out-of-scope bugs noticed (file:line + one line). ≤15 lines, no logs.
-- API contract changed → regenerate the typed client **before** web work.
+- API contract changed → regenerate the typed client **before** web work — but **land all API phases first and regen once**, rather than a codegen per API/web pair.
 
 ## 3. Checkpoint — JUDGE verifier re-runs, then commits
 
-Never trust an implementer's "all green". **One checkpoint per batch of phases**, not per agent. The verifier re-runs: builds, the affected tests, coverage on the changed code, and confirms the files exist (`git diff --stat`). It reports a **summary verdict**, not logs.
+Never trust an implementer's "all green". **One checkpoint per batch of phases**, not per agent. The verifier re-runs, **cheapest first, `--bail=1`**: typecheck → affected tests (`vitest --changed` / `jest --findRelatedTests <files>`) → build; plus coverage on the changed code, and confirms the files exist (`git diff --stat`). It reports a **summary verdict**, not logs. The full suite runs **once, pre-ship** (§7.1) — that's what makes the scoped gates safe.
 
 - **Coverage gate:** new logic well covered incl. error/gate branches — eyeball the per-file report, not a global %. Gaps → bounce to a fix agent before proceeding.
 - **The repo's commit-gate policy outranks this skill**: if CLAUDE.md says the pre-commit gate must be green, fix the gate — never `--no-verify` past it except where the repo's own docs sanction it (noted honestly). Batch commits so the gate runs a handful of times, not per file.
@@ -92,7 +109,9 @@ Never trust an implementer's "all green". **One checkpoint per batch of phases**
 
 ## 4. Review (parallel JUDGE, read-only, by lens)
 
-Spawn reviewers **in one message**, each a different lens, read-only, verifying against the real diff (`git diff <base>..HEAD`) + spec. **Derive lenses from what the change touches**; typical full-stack trio: security/tenancy·RLS, correctness/lifecycle (state machines, async/queues, idempotency, migrations up+down), frontend/integration (cache invalidation, generated client, a11y). Demand structured findings, one line each: `[Severity] file:line — issue — why — fix`, plus an `IN-SCOPE / OUT-OF-SCOPE` tag per finding; cap at the top ~10 per lens. If the harness offers the **Workflow tool**, the review→verify fan-out fits it well (invoking this skill is the orchestration opt-in).
+**Roll it forward, don't save it up.** As each batch checkpoints, spawn its reviewers against *that batch's* diff (`git diff <prev-checkpoint>..HEAD`) while the next batch is still being implemented — findings land early, and fixes fold into the next checkpoint instead of becoming their own round. Then **one final pass over the whole diff** (`git diff <base>..HEAD`) with an integration/cross-phase lens, which is the only thing a per-batch review structurally cannot see.
+
+Spawn reviewers **in one message**, each a different lens, read-only, verifying against the diff + spec. **Derive lenses from what the change touches**; typical full-stack trio: security/tenancy·RLS, correctness/lifecycle (state machines, async/queues, idempotency, migrations up+down), frontend/integration (cache invalidation, generated client, a11y). Demand structured findings, one line each: `[Severity] file:line — issue — why — fix`, plus an `IN-SCOPE / OUT-OF-SCOPE` tag per finding; cap at the top ~10 per lens. If the harness offers the **Workflow tool**, the review→verify fan-out fits it well (invoking this skill is the orchestration opt-in).
 
 ## 5. Fix (BUILDER, no file overlap)
 
@@ -125,8 +144,8 @@ Surface only the **Critical/High** count to the user in the run line, with the f
 
 Delegate: stack bring-up + API smoke (§6a–b) → JUDGE verifier; UI pass (§6c) → BUILDER, **reusing the same running stack**. You gate; you don't curl or browse yourself.
 
-### 6a. Bring up (once per run)
-Start infra (db/redis/object-store/etc.), migrate + seed, start API + worker + web; health-check each. Standalone workers often read raw `process.env` — pass env explicitly. **Random/ephemeral ports always, never defaults** (parallel runs collide): unique DB name / bucket / Redis prefix too; thread the API port into the web base URL and **CORS**; record the ports in the brief for §6b–c and teardown.
+### 6a. Bring up (infra already warm from §1)
+Infra should already be running from the §1 warm-up — health-check it, don't restart it. Migrate + seed now, start API + worker + web; health-check each. Standalone workers often read raw `process.env` — pass env explicitly. **Random/ephemeral ports always, never defaults** (parallel runs collide): unique DB name / bucket / Redis prefix too; thread the API port into the web base URL and **CORS**; record the ports in the brief for §6b–c and teardown.
 
 ### 6b. curl the REAL API first (fastest signal, isolates API vs UI bugs)
 Login for a token; hit happy paths; **assert exact status codes** on gated paths (402 vs 403). Create real data via the API; flip roles/plans directly in DB when needed (set tenant GUC, flush caches). Exercise async paths end-to-end incl. the **failure path** (kill a dependency → retries → visible failed state).
@@ -140,7 +159,7 @@ Triage what surfaces (cache-invalidation gaps, wrong codes, clipping) → in-sco
 
 **"Done" = merged into the default branch AND pushed.** Only stopping points short of that: no remote, or the user said stop.
 
-1. Green + clean: `git status` clean, builds/tests pass.
+1. **The one full run:** full build + **entire** test suite, here, once — the net under every scoped checkpoint gate. Plus `git status` clean. Red here → fix and re-run before any merge.
 2. Find the real default + remote (`git remote show origin | sed -n 's/.*HEAD branch: //p'`). No remote → report branch ready, stop.
 3. Integrate per repo convention: PR repos → push branch, `gh pr create`, merge it. Direct-push repos → `git checkout <default> && git pull --ff-only && git merge --no-ff <branch> && git push`.
 4. Verify landed: `git log --oneline origin/<default> -5`.
@@ -162,10 +181,11 @@ After the push: kill every server/worker/dev-server and background shell this ru
 - **Terse up, verbose down** — milestone lines to the user; full context to subagents, written once in the brief.
 - **Context economy:** summaries and pointers up; never raw logs into the orchestrator.
 - **One heavy job at a time:** parallel edits, serialized builds/suites, batched gates.
+- **Overlap what doesn't depend** — warm the stack early, review as batches land, fail fast on the cheap check. Speed comes from removing barriers, never from skipping verification.
 - **Found ≠ fixed, but found ≠ forgotten** — out-of-scope bugs get logged, not silently fixed or dropped.
 - **No-overlap parallelism**; **right-size the slices**; **honest reporting** (tested vs untested + why); **scale effort to the ask**.
 - **Finish the job** (merged + pushed = done) and **leave no mess** (teardown + closed tasks).
 
 ## Anti-patterns
 
-Trusting "all green" without a verifier re-run · `cat`-ing or whole-file-`Read`ing a log — at any tier, and especially for a run that passed · parallel agents each running the full suite (RAM death) · a gate run per file instead of per batch · clean rebuilds / dep reinstalls "to be safe" · repeating shared context in every subagent prompt instead of the brief · narrating progress to the user · parallel agents editing one file · "tested" = mocks only, app never started · "tested" = stack only, new code uncovered / happy-path-only tests · screenshot-only UI claims · silently expanding scope to fix an unrelated bug — or dropping it instead of logging it · leaving cross-phase breakage for the next agent · reading full logs/diffs into the orchestrator context.
+Trusting "all green" without a verifier re-run · `cat`-ing or whole-file-`Read`ing a log — at any tier, and especially for a run that passed · parallel agents each running the full suite (RAM death) · a gate run per file instead of per batch · a four-minute suite run before a two-second typecheck · docker cold-start discovered at §6 instead of warmed at §1 · saving every review finding for one big round at the end · codegen re-run per API/web pair · clean rebuilds / dep reinstalls "to be safe" · repeating shared context in every subagent prompt instead of the brief · narrating progress to the user · parallel agents editing one file · "tested" = mocks only, app never started · "tested" = stack only, new code uncovered / happy-path-only tests · screenshot-only UI claims · silently expanding scope to fix an unrelated bug — or dropping it instead of logging it · leaving cross-phase breakage for the next agent · reading full logs/diffs into the orchestrator context.
