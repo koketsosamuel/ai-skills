@@ -5,11 +5,17 @@ description: Orcaz — orchestrate a large/multi-phase feature build as the cond
 
 # orcaz — build+test → review → fix → real-stack test → ship
 
-You are the **orchestrator**: decompose, dispatch, gate. Subagents implement; a **JUDGE verifier agent** independently re-runs builds/tests/coverage and commits checkpoints. Subagent reports are claims until the verifier re-runs them. Your own hands touch nothing but the brief, the findings log, and the final push.
+You are the **orchestrator**: decompose, dispatch, gate. Subagents implement; a **VERIFIER agent** independently re-runs builds/tests/coverage and commits checkpoints. Subagent reports are claims until the verifier re-runs them. Your own hands touch nothing but the brief, the findings log, and the final push.
 
 **Prereq:** a written spec (phase docs / plan / issue). None → write one first; every implementer is pointed at it.
 
-**Model tiers:** BUILDER = `sonnet` (implement / fix / UI-drive); JUDGE = `opus` (review / verify). Small models (`haiku`, GPT-mini class) only for trivial mechanical side-tasks — never implementation, fixes, review, or verification. Never `fable`/Mythos-class for subagent work. If neither sonnet nor opus is offered, stop and ask.
+**Model tiers.** Match the model to whether the task is *mechanical* or *judgment*:
+
+- **BUILDER = `sonnet`** — implement / fix / UI-drive.
+- **VERIFIER = `sonnet`** — the checkpoint re-run (§3): run the commands, read the numbers, commit. Deterministic work with a deterministic answer, and the most-repeated agent in the run. **Escalate that checkpoint to `opus`** the moment it stops being mechanical: a verdict that doesn't match the implementer's claim, a flaky or ambiguous failure, coverage that looks gamed (assertions that can't fail, tests deleted rather than fixed), or anything touching auth/money/tenancy. Cheap by default, expensive when it matters.
+- **REVIEWER = `opus`** — §4 lenses, the live-stack API pass (§6b), and final triage. Judgment about whether code is *right*, not whether commands exited 0. Never downgrade these.
+
+Small models (`haiku`, GPT-mini class) only for trivial mechanical side-tasks — never implementation, fixes, review, or verification. Never `fable`/Mythos-class for subagent work. If neither sonnet nor opus is offered, stop and ask.
 
 ## 0. Two audiences — terse up, verbose down
 
@@ -68,14 +74,14 @@ spec → branch + brief + tasks ─┬─ [background] infra warm-up ───�
                                └─ recon fan-out                               │
   └─ per phase batch (serial if dependent, parallel if disjoint):             │
        implement + UNIT TEST (BUILDER, pointed at brief + spec)               │
-       → CHECKPOINT: JUDGE re-runs typecheck → affected tests → build → commits
-       → ROLLING REVIEW of that batch's diff (parallel JUDGE lenses) ──┐      │
-  → final integration-lens review over the full diff ─────────────────-┘      │
+       → CHECKPOINT: VERIFIER re-runs typecheck → affected tests → build → commits
+       → ROLLING REVIEW of that batch's diff (parallel REVIEWER lenses) ─┐    │
+  → final integration-lens review over the full diff ──────────────────┘      │
   → triage → fix in-scope (BUILDER, no shared files) → re-verify → commits    │
        → out-of-scope findings → the findings doc (§5b)                       │
   → manual test on the ALREADY-WARM stack: ←──────────────────────────────────┘
-       JUDGE migrates/seeds + curls REAL API; BUILDER drives REAL UI (playwright-cli)
-       → fix breaks (BUILDER) → JUDGE re-verifies → commits
+       REVIEWER migrates/seeds + curls REAL API; BUILDER drives REAL UI (playwright-cli)
+       → fix breaks (BUILDER) → VERIFIER re-verifies → commits
   → PRE-SHIP: full suite + full build, once
   → SHIP: YOU merge to the repo's DEFAULT branch and push
   → TEAR DOWN: stop everything started + close tracking tasks
@@ -98,7 +104,7 @@ Branch first (`git checkout -b feat/<x>`) — never build big on default. Recon 
 - Prompt must include: brief path, spec file **paths**, "discover real state first" (latest migration number, existing helpers, test runner), and the **report schema**: files changed, commands + PASS/FAIL, coverage % for new files, untested + why, deviations, out-of-scope bugs noticed (file:line + one line). ≤15 lines, no logs.
 - API contract changed → regenerate the typed client **before** web work — but **land all API phases first and regen once**, rather than a codegen per API/web pair.
 
-## 3. Checkpoint — JUDGE verifier re-runs, then commits
+## 3. Checkpoint — VERIFIER (`sonnet`) re-runs, then commits
 
 Never trust an implementer's "all green". **One checkpoint per batch of phases**, not per agent. The verifier re-runs, **cheapest first, `--bail=1`**: typecheck → affected tests (`vitest --changed` / `jest --findRelatedTests <files>`) → build; plus coverage on the changed code, and confirms the files exist (`git diff --stat`). It reports a **summary verdict**, not logs. The full suite runs **once, pre-ship** (§7.1) — that's what makes the scoped gates safe.
 
@@ -107,7 +113,7 @@ Never trust an implementer's "all green". **One checkpoint per batch of phases**
 - Verifier fixes/flags cross-phase breakage before the next batch builds on it.
 - **Chime per landed batch** (orchestrator session, fire-and-forget): `afplay /System/Library/Sounds/Glass.aiff`.
 
-## 4. Review (parallel JUDGE, read-only, by lens)
+## 4. Review (parallel REVIEWERs, `opus`, read-only, by lens)
 
 **Roll it forward, don't save it up.** As each batch checkpoints, spawn its reviewers against *that batch's* diff (`git diff <prev-checkpoint>..HEAD`) while the next batch is still being implemented — findings land early, and fixes fold into the next checkpoint instead of becoming their own round. Then **one final pass over the whole diff** (`git diff <base>..HEAD`) with an integration/cross-phase lens, which is the only thing a per-batch review structurally cannot see.
 
@@ -142,7 +148,7 @@ Surface only the **Critical/High** count to the user in the run line, with the f
 
 ## 6. Manual test on a REAL stack — the part people skip
 
-Delegate: stack bring-up + API smoke (§6a–b) → JUDGE verifier; UI pass (§6c) → BUILDER, **reusing the same running stack**. You gate; you don't curl or browse yourself.
+Delegate: stack bring-up + API smoke (§6a–b) → REVIEWER (`opus` — reading a 403 that should be a 402 is judgment); UI pass (§6c) → BUILDER, **reusing the same running stack**. You gate; you don't curl or browse yourself.
 
 ### 6a. Bring up (infra already warm from §1)
 Infra should already be running from the §1 warm-up — health-check it, don't restart it. Migrate + seed now, start API + worker + web; health-check each. Standalone workers often read raw `process.env` — pass env explicitly. **Random/ephemeral ports always, never defaults** (parallel runs collide): unique DB name / bucket / Redis prefix too; thread the API port into the web base URL and **CORS**; record the ports in the brief for §6b–c and teardown.
@@ -174,7 +180,7 @@ After the push: kill every server/worker/dev-server and background shell this ru
 
 ## Principles
 
-- **Verify, don't trust — delegate the verifying.** Claims become truth only when the JUDGE verifier re-runs them.
+- **Verify, don't trust — delegate the verifying.** Claims become truth only when the verifier re-runs them; the verifier is cheap because the work is mechanical, and escalates to `opus` the instant it isn't.
 - **The repo's rules outrank this skill** (gate policy, branch flow, coverage bar).
 - **Both test layers, always:** unit tests with real branch/failure coverage AND the live-stack pass. Mocks prove the unit; the stack proves the feature.
 - **Evidence, not vibes:** exact status codes, markers, screenshots, worker-log pointers.
