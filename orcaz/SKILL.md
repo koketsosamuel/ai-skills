@@ -134,15 +134,15 @@ Real bugs surface that this run will **not** fix: pre-existing defects, tech deb
 ## <YYYY-MM-DD> — <feature/branch>
 
 ### [High] Tenant filter missing on export query — `api/src/export/export.service.ts:88`
-- **Symptom:** cross-tenant rows returned when `?all=true`; hit during §6b API pass.
+- [ ] **Symptom:** cross-tenant rows returned when `?all=true`; hit during §6b API pass.
 - **Repro:** `curl -H "Authorization: Bearer $T_A" '<api>/export?all=true'` → returns tenant B rows.
 - **Suggested fix:** add the RLS tenant GUC set in `withTenant()` (mirrors `report.service.ts:41`).
 - **Deferred because:** pre-existing on `main`, outside this spec's scope; needs its own phase + migration.
 ```
 
-Severity in the heading (`Critical/High/Med/Low`), one file:line anchor, and the four bullets — symptom, repro, suggested fix, why deferred. Keep each entry ≤6 lines.
+Severity in the heading (`Critical/High/Med/Low`), one file:line anchor, an unchecked box so the doc is a **work queue** and not a graveyard, and the four bullets — symptom, repro, suggested fix, why deferred. Keep each entry ≤6 lines.
 
-Surface only the **Critical/High** count to the user in the run line, with the file path — not the contents.
+**Mid-run** the user sees only the Critical/High count + the file path, never the contents — the actionable list is the end-of-run report (§8).
 
 ## 6. Manual test on a REAL stack — the part people skip
 
@@ -174,7 +174,19 @@ Triage what surfaces (cache-invalidation gaps, wrong codes, clipping) → in-sco
 
 After the push: kill every server/worker/dev-server and background shell this run started; `docker compose down` (+`-v` for throwaway volumes) or stop/rm the specific containers — **scope to this run only**, never another agent's. Close out tracking tasks. Confirm clean (`docker ps`, `lsof -i` on your ports).
 
-**Final report — ≤5 lines:** commit/PR URL · one-line summary · tests (unit + stack) · deferred findings count + file path · teardown confirmed.
+**Final report.** Terse everywhere except the bugs — those are the one thing the user has to act on, so they get listed, not counted.
+
+1. **≤5 lines of run status:** commit/PR URL · one-line summary · tests (unit + stack) · teardown confirmed.
+2. **Deferred findings — one line each, most severe first**, so they're actionable without opening the doc:
+
+```
+Deferred (docs/orcaz-findings.md):
+  [High] cross-tenant rows on ?all=true — api/src/export/export.service.ts:88
+  [Med]  retry storm on 5xx, no backoff — worker/src/jobs/sync.ts:140
+  [Low]  flaky: clock-dependent assertion — api/test/billing.spec.ts:62
+```
+
+List all of them up to ~10; beyond that, list Critical/High and count the rest. Then **ask once** whether to act on them — file as `gh issue create`, feed to **orcaz-plan** as the next set of phases, or leave in the doc. One question, no follow-up nagging; filing issues is outward-facing, so it waits for a yes.
 
 ## Principles
 
