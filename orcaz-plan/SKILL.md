@@ -53,6 +53,18 @@ Slice how orcaz consumes it:
 - **Order by dependency**: shared files / sequential migration numbers = serial; disjoint file sets = parallel — say which, so orcaz can parallelize.
 - **Each phase ends in a demonstrable outcome**, not "code exists"; the Phase gate is the boolean that unblocks the next.
 
+### Design taste — plan the simplest, most beautiful implementation
+
+The plan decides how the code will look; simplicity is designed in here or never. **Simple ≠ incomplete** — edge cases, failure paths, and researched gotchas stay fully covered; simplicity buys you the *shape* of the solution, never its coverage. When two designs both handle every case, the plan specifies the smaller one. Apply while slicing *and* while writing scope:
+
+- **Fewest moving parts that make the Objective true.** No new table, service, abstraction, config flag, queue, or dependency unless the phase genuinely can't land without it — and if it needs one, Design notes says in a line why nothing simpler suffices.
+- **Extend the exemplar before inventing a pattern.** One way to do a thing per repo: point at the existing file to mirror rather than specifying a parallel mechanism beside it.
+- **Today's requirement only.** No speculative generality, no "hooks for later", no options nobody asked for — a config knob with one caller is a bug in the plan.
+- **Prefer subtraction.** If the slice can unify or delete a duplicated path instead of adding a third, scope that; call it out.
+- **Small, boring surfaces.** Narrow interfaces, plain data, obvious names, straight-line flow; concentrate the unavoidable complexity in one place instead of smearing it across layers.
+- **Hold-it-in-your-head test.** If the Scope needs a diagram to be intelligible, the slice is too clever or too big — simplify or split.
+- **The simple path still handles the ugly cases.** Nulls, empties, duplicates, retries, partial failure, concurrency, tenancy — spelled out in Scope/Tasks/Acceptance as before. Handle them inline in the straightforward flow (a guard clause, a unique constraint, an idempotency key) rather than by adding machinery; "we'll skip that case" is never the simplification.
+
 ## 4. Write — one doc per slice (canonical anatomy)
 
 Standalone markdown per phase; an agent needs nothing but the doc + cited files:
@@ -83,7 +95,8 @@ risk: CRUD = two lines; billing/auth/concurrency/3rd-party = a real list.
 
 ## Design notes / decisions
 Deliberate choices + rationale (why this shape/FK/idempotency key); the researched
-recommendation over the obvious-but-wrong one.
+recommendation over the obvious-but-wrong one; for each new abstraction, table, or
+dependency, the one line on why nothing simpler suffices.
 
 ## Tasks
 Grouped `- [ ]` checklists (Schema/Service/Web/Tests). ALWAYS include tests: happy +
@@ -119,6 +132,7 @@ Add each phase to the order index as a one-line link, dependency-ordered, API-be
 - **Plan from the real codebase, not memory** — a phase citing a nonexistent file is worse than no phase.
 - **Research is first-class** — fan out, verify load-bearing claims, cite sources, let gotchas shape boundaries.
 - **Right-size for orcaz** — cohesive shippable bites; split epics, don't shred.
+- **Simple, beautiful code is the plan's job** — fewest moving parts, extend before inventing, no speculative generality; every new abstraction/table/dependency justified in Design notes or cut. Simplicity is the design's shape, never dropped edge cases.
 - **Outcome, not output** — Objective/Acceptance = demonstrably TRUE; gate = the unblocking boolean.
 - **Honor repo conventions exactly**; **surface the hard calls** with recommendations before commit.
 - **Context economy** — subagents return conclusions/pointers, never dumps.
@@ -126,4 +140,4 @@ Add each phase to the order index as a one-line link, dependency-ordered, API-be
 
 ## Anti-patterns
 
-Phases citing files/commands/numbers that don't exist · skipping research (footgun rediscovered mid-build) · generic gotchas ("watch out for security") instead of feature-and-version-specific with a source · oversized or shredded phases · phases violating repo cross-cutting rules · "done = code exists" instead of outcome + gate · burying an architecture question in a doc instead of asking · docs left uncommitted · sweeping unrelated changes into the plan commit or bypassing the hook for real code · implementing the feature or invoking orcaz.
+Phases citing files/commands/numbers that don't exist · skipping research (footgun rediscovered mid-build) · generic gotchas ("watch out for security") instead of feature-and-version-specific with a source · oversized or shredded phases · designing for hypothetical future requirements · a new abstraction/table/service/dependency where extending an exemplar would do · unjustified config knobs and indirection layers · "simplifying" by dropping edge cases, failure paths, or tests · phases violating repo cross-cutting rules · "done = code exists" instead of outcome + gate · burying an architecture question in a doc instead of asking · docs left uncommitted · sweeping unrelated changes into the plan commit or bypassing the hook for real code · implementing the feature or invoking orcaz.
