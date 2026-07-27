@@ -24,11 +24,22 @@ shipped ✅ main@ef01234
 
 **To subagents: exhaustive.** They start blank — every prompt carries the full task, exact commands, constraints, and the report schema.
 
-**The brief (do this once, before dispatching).** Write `<scratchpad>/orcaz-brief.md`: branch, spec paths, package manager, build/lint/test/coverage/codegen commands, migration numbering, repo rules (CLAUDE.md gate policy), stack bring-up notes, resource limits (§0a), report schema. Every subagent prompt then reads: *"Read `<path>/orcaz-brief.md` first. Your slice: …"* — shared context is written once, not re-tokenized per agent. Update it as facts change.
+**The brief (do this once, before dispatching).** Write `<scratchpad>/orcaz-brief.md`: branch, spec paths, package manager, build/lint/test/coverage/codegen commands, migration numbering, repo rules (CLAUDE.md gate policy), stack bring-up notes, the log + resource rules (§0a–0b) copied in verbatim, report schema. Every subagent prompt then reads: *"Read `<path>/orcaz-brief.md` first. Your slice: …"* — shared context is written once, not re-tokenized per agent. Update it as facts change.
 
-**Context economy.** Never read raw build/test/server logs, full diffs, or whole coverage tables into your own context. Demand **structured summaries** (verdict + failures + key numbers, not transcripts); when you must check a log, `tail`/`grep` it, never `cat`. Point subagents at **paths**, never paste spec content. Cap every report: **≤15 lines, no log dumps** — evidence as pointers (file:line, screenshot path, exit code).
+**Context economy.** Never read raw build/test/server logs, full diffs, or whole coverage tables into your own context. Demand **structured summaries** (verdict + failures + key numbers, not transcripts). Point subagents at **paths**, never paste spec content. Cap every report: **≤15 lines, no log dumps** — evidence as pointers (file:line, screenshot path, exit code).
 
-### 0a. Resource discipline — fast without thrashing RAM
+### 0a. Log discipline — applies to every agent, not just you
+
+A green run needs one line of output; a red one needs the failing block, not the file. Put this rule in the brief verbatim so subagents inherit it — they burn *your* budget too.
+
+- **Quiet by default:** `vitest run --reporter=dot`, `jest --silent`, and pipe anything chatty: `<cmd> 2>&1 | tail -30`. Passing suite → read the summary line, stop.
+- **Filter before reading:** `grep -nE '(FAIL|✕|error TS|Error:)' -A5 <log>`, `tail -n 50`. Never `cat` a log, never `Read` a log file whole.
+- **Widen only on demand:** filtered view doesn't explain the failure → grep wider or tail more, one step at a time. Whole-file reads of a log are a last resort, and never for a *passing* run.
+- **Read the code, not the transcript:** once you have the failing `file:line`, open that file region — that's where the answer is.
+- **Coverage:** `grep` the changed files' rows out of the report; never ingest the full table.
+- **Servers:** redirect to a file, then `grep` for the request/job id. Don't stream a dev server into context.
+
+### 0b. Resource discipline — fast without thrashing RAM
 
 Builds and test suites are the RAM hogs; parallelism *there* is what kills the machine, not parallel editing.
 
@@ -157,4 +168,4 @@ After the push: kill every server/worker/dev-server and background shell this ru
 
 ## Anti-patterns
 
-Trusting "all green" without a verifier re-run · parallel agents each running the full suite (RAM death) · a gate run per file instead of per batch · clean rebuilds / dep reinstalls "to be safe" · repeating shared context in every subagent prompt instead of the brief · narrating progress to the user · parallel agents editing one file · "tested" = mocks only, app never started · "tested" = stack only, new code uncovered / happy-path-only tests · screenshot-only UI claims · silently expanding scope to fix an unrelated bug — or dropping it instead of logging it · leaving cross-phase breakage for the next agent · reading full logs/diffs into the orchestrator context.
+Trusting "all green" without a verifier re-run · `cat`-ing or whole-file-`Read`ing a log — at any tier, and especially for a run that passed · parallel agents each running the full suite (RAM death) · a gate run per file instead of per batch · clean rebuilds / dep reinstalls "to be safe" · repeating shared context in every subagent prompt instead of the brief · narrating progress to the user · parallel agents editing one file · "tested" = mocks only, app never started · "tested" = stack only, new code uncovered / happy-path-only tests · screenshot-only UI claims · silently expanding scope to fix an unrelated bug — or dropping it instead of logging it · leaving cross-phase breakage for the next agent · reading full logs/diffs into the orchestrator context.
