@@ -11,17 +11,19 @@ followed by the instructions Claude loads when the skill is invoked).
 
 Orchestrate a large / multi-phase feature build as the **conductor of subagents**:
 
-- **Decompose** the spec into right-sized, individually testable phases (not one giant chunk, not trivial micro-tasks).
+- **Decompose** the spec into right-sized, individually testable phases (not one giant chunk, not trivial micro-tasks), and write a **brief** once — commands, conventions, repo rules, report schema — that every subagent reads instead of having it re-pasted into its prompt.
 - **Implement** each phase with a BUILDER (`sonnet`) subagent that ships code *and* unit tests together — small models (haiku / GPT-mini class) never do implementation, fixes, review, or verification.
-- **Verify** every checkpoint with a JUDGE (`opus`) verifier agent (re-runs build/tests/coverage, commits) — the orchestrator never verifies by hand, and the repo's own rules (commit-gate policy, branch flow) always outrank the skill.
-- **Review** in parallel with JUDGE reviewers, lenses derived from what the change touches (e.g. security/tenancy, correctness/lifecycle, frontend/integration).
+- **Verify** each batch with a VERIFIER (`sonnet`) agent that re-runs **typecheck → affected tests → build** and commits — cheap because the work is mechanical, **escalated to `opus`** the moment it isn't (verdict contradicts the implementer, ambiguous failure, coverage that looks gamed, anything touching auth/money/tenancy). The orchestrator never verifies by hand, and the repo's own rules (commit-gate policy, branch flow) always outrank the skill.
+- **Review** the full diff in **one round** once every phase has landed — parallel REVIEWER (`opus`) agents, lenses derived from what the change touches (e.g. security/tenancy, correctness/lifecycle, frontend/integration). Judgment work never gets downgraded.
 - **Fix** findings with BUILDER agents split so no two touch the same files.
-- **Manual-test on a real stack** — bring it up on **random ports** (parallel-safe), smoke-test the real API with `curl`, drive the real UI with `playwright-cli`.
-- **Ship** by integrating into the repo's default branch and pushing — that push *is* the definition of "done"; invoking the skill is standing authorization to make it.
+- **Manual-test on a real stack** — warmed in the background from minute one, brought up on **random ports** (parallel-safe); smoke-test the real API with `curl`, drive the real UI with `playwright-cli`.
+- **Log what's out of scope** rather than silently fixing or dropping it: unrelated bugs go to a findings doc, and the end-of-run report *lists* them (severity + `file:line`), then asks once whether to file them, plan them, or leave them.
+- **Ship** by integrating into the repo's default branch and pushing — that push *is* the definition of "done"; invoking the skill is standing authorization to make it. One full build + full suite runs here, once, as the net under every scoped gate.
 - **Tear down** every server / DB / Docker container the run started, and close out the tracking tasks.
-- **Context economy** throughout: the orchestrator reads structured summaries and evidence pointers, never raw logs, full diffs, or coverage dumps.
+- **Terse up, verbose down**: one line per landed milestone to the user, exhaustive context to subagents.
+- **Context and resource economy** throughout: the orchestrator reads structured summaries and evidence pointers, never raw logs, full diffs, or coverage dumps — and *no* agent `cat`s a log. Parallel edits, serialized builds and suites, capped test workers, batched gates.
 
-A short sound plays when a phase lands and again when the work ships.
+A short sound plays when a batch lands and again when the work ships.
 
 ### [`orcaz-plan/`](orcaz-plan/SKILL.md)
 
@@ -30,6 +32,7 @@ Turn a fuzzy feature request into the **implementation-ready phase docs** that `
 - **Recon** the codebase first — real conventions, exemplar files to mirror, migration numbering, test gates. Phases cite real paths, never assumptions.
 - **Research** the problem space (web + in-repo, fan-out): common misconceptions, expert advice from primary sources, version-specific footguns — adversarially verifying load-bearing claims. The gotchas shape the phase boundaries.
 - **Decompose** into right-sized, dependency-ordered, individually-shippable slices (paired API-before-web where the repo does that).
+- **Design for simplicity**, since the plan is where it's decided: fewest moving parts that make the Objective true, extend the exemplar before inventing a pattern, today's requirement only, every new abstraction / table / dependency justified in a line or cut. Simple is the solution's *shape*, never dropped edge cases.
 - **Write** one markdown doc per phase using a canonical anatomy: Objective, Context, Scope (+ out-of-scope), Misconceptions & gotchas, Design decisions, checkbox Tasks and Acceptance checks, Phase gate, Open decisions.
 - **Surface** the architecture-deciding open questions to the user (with recommended defaults) before committing, then **commit + push the docs** — that's the deliverable; it never writes feature code or invokes `orcaz` itself.
 
