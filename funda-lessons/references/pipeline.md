@@ -62,8 +62,10 @@ scripts/lessons/<subject-slug>/grade-<n>/
 node <kit>/build.mjs <set>                                  # every src/*/build.mjs, then fit viewBoxes
 node <kit>/check-math.mjs  <set>/<topic-folders…>           # every expression renders as the API renders it
 node <kit>/check-svg.mjs   <set>/<topic-folders…>           # XML, viewBox, sanitizer allowlist, no tspans
+node <kit>/check-contrast.mjs <set>/<topic-folders…>        # every label 4.5:1, light AND dark theme
 node <kit>/validate.mjs    <set>/<topic-folders…>           # the admin editor's own schema + lint
 node <kit>/render-svgs.mjs <png-dir> <set>/<topic-folders…> # then Read EVERY PNG
+node <kit>/render-svgs.mjs --dark <png-dir> <set>/<topic-folders…>  # and every dark one
 node <kit>/photos.mjs <set>/IMAGES-NEEDED.md <set>/<topic-folders…>
 node <kit>/generate-sql.mjs <set> --assign-ids --out /dev/null   # ids for new files
 ```

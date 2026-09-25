@@ -27,13 +27,35 @@ historical event, and never fake a photograph.
   serves only allowlisted tags and attributes and drops the rest silently. `<kit>/check-svg.mjs`
   mirrors that list — if a diagram needs a new attribute, add it to the sanitizer (with a spec)
   first. `stroke-dasharray` was missing until 2026-09-25 and every dashed asymptote drew solid.
-- Colours from the kit palette only (GREY, BLUE, TEAL, AMBER, CORAL, PURPLE): mid-tones readable
-  on the white card AND the dark theme. Never black or white for anything that carries meaning.
-  Colour carries meaning (one colour per idea, matched in the caption and text), not decoration.
+- Colour carries meaning (one colour per idea, matched in the caption and text), not decoration.
+- See **Colour and contrast** below: kit inks only, and every label readable in both themes.
 - Text 12–16 in viewBox units, short labels, ~10 units of margin so nothing clips. One `<text>`
   per label. `<kit>/fit-viewbox.mjs` (run by `<kit>/build.mjs`) widens the viewBox when a label would clip.
 - Keep each diagram under ~80 KB (maths labels are the heavy part).
 - The caption says what to notice, and may use `$…$`.
+
+## Colour and contrast — both themes, every label
+
+The phone and the website **recolour every diagram at render time**. The six kit inks (GREY, BLUE,
+TEAL, AMBER, CORAL, PURPLE) and `PAPER` (white) are swapped for per-theme values: darker inks on
+the white card, lighter inks on the dark card (`#2A2926`), and `PAPER` becomes the card colour
+itself. The table is `LESSON_SVG_INKS` in `<Funda>/apps/mobile/constants/colors.ts`; the website
+mirrors it. So:
+
+- **Only the kit inks and `PAPER`, imported from `svg.mjs`.** Any other hex, black, `currentColor`
+  or a named colour is never recoloured — it stays one colour on both cards, and the seed
+  validator rejects it. Tints are a kit ink with `fill-opacity`, never a pale hex.
+- **A tint behind a label: `fill-opacity` at most `LABEL_TINT` (0.08, from `svg.mjs`).** A label in
+  the same ink as its tint drops below 4.5:1 past about 0.11 on the light card. Stronger tints are
+  fine where nothing is written on them (a shaded region, a bar with its label outside).
+- **A labelled box that needs a strong colour** (a chip, a badge, a highlighted cell): fill the
+  shape with solid ink, no opacity, and write the label in `PAPER`. PAPER follows the card, so the
+  label reads on the solid ink in both themes.
+- **Never lower a label's own opacity**, and never draw a label in `PAPER` on the plain card (it
+  disappears).
+- `<kit>/check-contrast.mjs` proves it: every `<text>` and `math()` label against the card plus
+  every shape drawn under it, in both themes, 4.5:1 (3:1 for large text). A failure names the
+  label, its ink and the tint behind it — fix the source, never the JSON.
 
 ## Accuracy
 
@@ -78,10 +100,14 @@ historical event, and never fake a photograph.
 ```
 node <kit>/build.mjs <set>                    # builds, then fits viewBoxes
 node <kit>/check-svg.mjs <topic-dirs>
-node <kit>/render-svgs.mjs <png-dir> <topic-dirs>   # then Read every PNG
+node <kit>/check-contrast.mjs <topic-dirs>                # every label, light and dark
+node <kit>/render-svgs.mjs <png-dir> <topic-dirs>         # then Read every PNG
+node <kit>/render-svgs.mjs --dark <png-dir> <topic-dirs>  # and again on the dark card
 ```
 
 Check each one: nothing overlaps (labels vs lines vs other labels), nothing clipped, labels sit
 next to what they label, the maths matches the lesson text, colours match their meaning, arrows
-point the right way, graphs are accurate, and the diagram actually helps. Quick Look draws text in
+point the right way, graphs are accurate, and the diagram actually helps. In the dark render, look
+for anything that vanished (a non-kit colour, a PAPER label off its solid box) or a tint so faint
+the region it marks is lost. Quick Look draws text in
 a serif font, so the final say on spacing is the phone.

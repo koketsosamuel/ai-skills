@@ -17,7 +17,9 @@ worked calculations), Geography (scale, gradient), Technology/EGD (dimensions).
   `\ge`, `\ne`, `\approx`, `\text{}`, `\left( \right)`, `\begin{array}{rcl}…\end{array}` (with
   `\hline` and `|` rules — they draw), `\quad`, `\;`, `\,`, `^\circ`, Greek letters, `\mathbb{R}`,
   `\cdot`, `\ldots`, `\overline{}`, `\hat{}`, `\triangle`, `\angle`, `\rightarrow`.
-  Not allowed: `aligned`, `align`, `cases`, `\color`/`\textcolor`, `\ce` (mhchem), any package.
+  Not allowed: `aligned`, `align`, `cases`, `\color`/`\textcolor`, `\ce` (mhchem), any package —
+  and so not `\dfrac`/`\tfrac` (use `\frac`, `\displaystyle` inside arrays), `\therefore` (write ∴
+  outside the maths) or `\square` (describe the key in words).
 - **Everything that is maths goes in `$…$`** — never plain letters beside typeset ones:
   - variables, unknowns, point/side/angle/triangle names: `$x$`, `$\theta$`, `angle $P$`,
     `side $AB$`, `$\triangle PQR$`, `$\hat{R}$`, `$x$-axis`, `the $y$-intercept`

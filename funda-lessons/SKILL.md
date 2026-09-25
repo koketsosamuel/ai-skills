@@ -24,7 +24,7 @@ request → 1. INTAKE: subject, grade, topics, source, what production already h
         → 2. PLAN: the set's topics (fixed ids), lesson split, who writes what
         → 3. WRITE: src/NN-name/build.mjs per group (you, or parallel opus agents)
         → 4. GRAPHICS: diagrams drawn in code; photo placeholders where reality is needed
-        → 5. GATES: build, check-math, check-svg, validate, render + LOOK, photos, ids
+        → 5. GATES: build, check-math, check-svg, check-contrast, validate, render light + dark + LOOK, photos, ids
         → 6. LOAD locally (lead only) → api-check → look on the phone
         → 7. HAND-OFF: report, photo list, production commands; commit only when asked
 ```

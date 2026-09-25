@@ -24,6 +24,8 @@ into lesson JSON that the Funda SA learner app renders, with diagrams. Readers a
 - Never download, generate or invent a photograph. Where a real photo is needed, use `photo()`
   (photos.md).
 - Other agents work in sibling folders at the same time. Don't touch their folders.
+- Diagram colours: kit inks and PAPER from `svg.mjs` only; a tint behind a label no stronger than
+  `LABEL_TINT`; a strongly coloured labelled box is solid ink with a PAPER label (graphics.md).
 
 ## Read first
 
@@ -39,7 +41,8 @@ into lesson JSON that the Funda SA learner app renders, with diagrams. Readers a
 `{Funda}/scripts/lessons/kit/` (import it from your build script as `../../../../kit/…`):
 `blocks.mjs` (p, eq, h2, h3, ul, ol, section, callout, reveal, check, cards, figure, table,
 working, photo, writePhotoRequests, image, r = String.raw — `**bold**` makes a bold run),
-`svg.mjs` (palette + svg, text, line, dot, polyline, polygon, path, rect, circle, arrowLine),
+`svg.mjs` (palette GREY BLUE TEAL AMBER CORAL PURPLE PAPER, LABEL_TINT, + svg, text, line, dot,
+polyline, polygon, path, rect, circle, arrowLine),
 `mathsvg.mjs` (math, mathWidth, mathExtent, wordsMath), and the checks in pipeline.md.
 
 ## Output
@@ -60,8 +63,9 @@ source files to merge or split, which topic owns the introduction.}
 ## Before you finish
 
 1. `node {Funda}/scripts/lessons/kit/build.mjs {set}` is the lead's; you run your own
-   `node build.mjs`, then fit-viewbox, check-math, check-svg, validate on your folders — all clean.
-2. render-svgs and Read every PNG; fix what's weak.
+   `node build.mjs`, then fit-viewbox, check-math, check-svg, check-contrast, validate on your
+   folders — all clean.
+2. render-svgs, then render-svgs --dark, and Read every PNG; fix what's weak.
 3. photos.mjs for your folders.
 4. Re-read every lesson as a {Grade} learner.
 5. Report (short): lessons written (topic, file, title, block count, diagram count, photo
