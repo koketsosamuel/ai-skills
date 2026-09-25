@@ -68,6 +68,17 @@ Act as an **SEO expert** who audits and maximizes a site's search visibility end
 - **Myth-refusal as a feature**: declines dead tactics (meta keywords, FAQ/HowTo rich results, keyword density, sitemap priority) with the one-line why.
 - **Verify by fetching**: raw-HTML check (`curl` — what AI crawlers and Bing actually see), robots/sitemap/llms.txt resolution, structured-data validation.
 
+### [`funda-lessons/`](funda-lessons/SKILL.md)
+
+Write **Funda SA lessons for any subject and grade, ready for production**, with graphics, checked on the phone:
+
+- **Production-first**: every lesson lives in the Funda repo as a *lesson set* (`scripts/lessons/<subject>/grade-<n>/` — source build scripts, built JSON, fixed ids) and reaches production through the repo's loader, which keeps ids stable across environments, never deletes (learner progress cascades), never overwrites an admin's edit, and hides lessons still waiting for photos. Claude loads locally and hands the owner the production commands.
+- **Intake → plan → write**: CAPS topic order checked against what production's curriculum already has, one idea per lesson, plain language for a 15-year-old, every worked step shown, reveals and quickchecks in every lesson. Large jobs fan out to `opus` agents sharing one [brief](funda-lessons/references/agent-brief.md).
+- **Maths everywhere it belongs** ([rules](funda-lessons/references/maths.md)): every symbol in `$…$`, including chemistry and physics units; diagram labels drawn as MathJax glyph paths so they match the text exactly.
+- **Graphics drawn in code** ([rules](funda-lessons/references/graphics.md)): to-scale graphs, geometry, circuits, cycles, timelines, ledgers, with a per-subject catalogue of what's worth drawing and what the phone's SVG renderer and the API sanitizer will and won't draw.
+- **Photo placeholders, never fetched or invented photos** ([rules](funda-lessons/references/photos.md)): a "Photo coming soon" frame where only a real photo will do, an `IMAGES-NEEDED.md` shopping list (what to shoot or find, legal sources, alt text, caption), and the path for a photo uploaded in production to come back into the source.
+- **Gates** ([pipeline](funda-lessons/references/pipeline.md)) using the repo's kit: maths render check, SVG/sanitizer check, the admin editor's own validator, render-to-PNG for looking, local load + API check, then the phone.
+
 ## Installing a skill
 
 Copy a skill directory into your Claude Code skills folder:
