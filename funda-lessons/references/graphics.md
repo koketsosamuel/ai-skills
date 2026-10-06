@@ -13,6 +13,11 @@ website as inline SVG, and served through the API's sanitizer. Build them in cod
 | accuracy is geometric (graphs, shapes, circuits, maps to scale) | a drawing would be a guess (a specific rock, organism, artwork, building, historical scene) |
 | e.g. graphs, triangles, number lines, Venn diagrams, circuits, force diagrams, food webs, the water cycle, a cell schematic, a timeline, a flow of money, a ledger layout | e.g. a microscope slide, a rock sample, a landform, a historical photograph, a painting, a crop disease, lab apparatus as it really looks, a person doing a skill |
 
+**Diagrams exams use are the ones to draw.** Before drawing, look at how recent past papers draw
+the same thing (exam-alignment.md) and match their conventions — symbols, orientation, labels,
+axes — so the lesson's diagram is the one the learner meets in the exam. Redraw a paper's diagram
+in code rather than cropping it; crop only photographs and sources (photos.md).
+
 When in doubt, draw a clear schematic now AND request the photo — a labelled diagram teaches the
 parts, the photo proves it is real. Never draw a realistic picture of a real person, artwork or
 historical event, and never fake a photograph.

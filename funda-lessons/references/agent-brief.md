@@ -24,11 +24,17 @@ into lesson JSON that the Funda SA learner app renders, with diagrams. Readers a
 - Never download, generate or invent a photograph. Where a real photo is needed, use `photo()`
   (photos.md).
 - Other agents work in sibling folders at the same time. Don't touch their folders.
+- Teach only what the exam map says is examined, at its depth. Every lesson has an exam-style
+  question with marks and a memo-style answer, cited to the paper it adapts.
+- Past papers: read-only from `~/Documents/past papers` via `{skill}/scripts/papers.py pull … --out
+  {scratchpad}/papers-{your-folder}`; crops go only to `{set}/photos/<id>.png` (photos.md).
 - Diagram colours: kit inks and PAPER from `svg.mjs` only; a tint behind a label no stronger than
   `LABEL_TINT`; a strongly coloured labelled box is solid ink with a PAPER label (graphics.md).
 
 ## Read first
 
+- `{set}/EXAM-MAP.md` — your topics' sections: what is asked, marks, must-know wording, mistakes, depth
+- `{skill}/references/exam-alignment.md` — how lessons follow the exam
 - `{skill}/references/house-style.md` — how a lesson reads (follow exactly)
 - `{skill}/references/maths.md` — symbols in text and diagrams
 - `{skill}/references/graphics.md` — what to draw, SVG rules, look at every diagram
@@ -67,7 +73,8 @@ source files to merge or split, which topic owns the introduction.}
    folders — all clean.
 2. render-svgs, then render-svgs --dark, and Read every PNG; fix what's weak.
 3. photos.mjs for your folders.
-4. Re-read every lesson as a {Grade} learner.
+4. Re-read every lesson as a {Grade} learner the week before the exam: could they answer each
+   "How it is asked" line in your topics for full marks? Is anything there that no paper asks?
 5. Report (short): lessons written (topic, file, title, block count, diagram count, photo
-   requests), mistakes you found in the source and how you fixed them, anything you were unsure
-   about.
+   requests and how many are cropped), exam-map lines you didn't cover and why, mistakes you
+   found in the source or a memo and how you fixed them, anything you were unsure about.

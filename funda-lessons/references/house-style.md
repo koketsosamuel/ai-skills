@@ -6,7 +6,10 @@ September 2026). Follow it exactly; it is what "good" means here.
 ## Voice
 
 - Plain language a 15-year-old understands. Short sentences, direct verbs, sentence case.
-- Explain every term the first time it appears. Use the CAPS term (factorise, photosynthesis,
+- A companion, not a textbook: explain each idea once, at the depth the papers reach
+  (exam-alignment.md), then practise it the way it is examined. Cut asides and enrichment.
+- Explain every term the first time it appears; where the exam guideline gives a definition,
+  also give that exact wording as the answer to "Define …". Use the CAPS term (factorise, photosynthesis,
   hydrological cycle, ledger, figure of speech) and say what it means.
 - Tell the learner what happened and what to do next. No idioms, no filler ("Let's dive in",
   "In this exciting lesson"), no hype, no claims the app cannot guarantee.
@@ -35,16 +38,19 @@ September 2026). Follow it exactly; it is what "good" means here.
 - **Definitions**: a bullet list with a bold term — `'**Osmosis**: water moving …'`. No `card`
   blocks. Bold and `$maths$` cannot share a block (the maths wins, the bold is lost): keep the
   bold item in words and put the maths in a child item.
-- **Every lesson** has at least one `reveal` ("Try it yourself: …", the full answer inside)
-  and 1–3 `quickcheck`s with exactly one correct option and an explanation that teaches (why
-  the right answer is right, what the tempting wrong one gets wrong).
+- **Every lesson** has at least one `reveal` ("Try it yourself: …", the full answer inside),
+  an "Exam-style question" `reveal` with marks and a memo-style answer (exam-alignment.md), and
+  1–3 `quickcheck`s with exactly one correct option and an explanation that teaches (why the
+  right answer is right, what the tempting wrong one gets wrong). Build wrong options from the
+  real mistakes in the exam map.
 - **Multi-part prompts** put each part on its own line with real newlines:
   `'Try it yourself: solve these.\na) $9^x = 27$\nb) $4^{x-1} = 8^x$'`.
 - **Callouts** sparingly (≤ 2–3 per lesson): `warning` for a common mistake, `tip` for a
   shortcut, `info` for context. Never decoration.
 - **Tables** of values, comparisons, vocabulary or data use the `table` block (grid of cells,
   `$…$` allowed, 1–20 rows, 1–10 columns). Never a TeX `array` pretending to be a table.
-- **Flashcards**: at most one set per topic, as an end-of-topic recap in its last lesson.
+- **Flashcards**: at most one set per topic, as an end-of-topic recap in its last lesson (the
+  exam-practice lesson) — definitions and laws in the guideline's wording.
 - **Diagrams** wherever a picture teaches faster than words — see graphics.md. **Photos**
   where only reality will do — see photos.md.
 

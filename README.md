@@ -79,6 +79,17 @@ Write **Funda SA lessons for any subject and grade, ready for production**, with
 - **Photo placeholders, never fetched or invented photos** ([rules](funda-lessons/references/photos.md)): a "Photo coming soon" frame where only a real photo will do, an `IMAGES-NEEDED.md` shopping list (what to shoot or find, legal sources, alt text, caption), and the path for a photo uploaded in production to come back into the source.
 - **Gates** ([pipeline](funda-lessons/references/pipeline.md)) using the repo's kit: maths render check, SVG/sanitizer check, the admin editor's own validator, render-to-PNG for looking, local load + API check, then the phone.
 
+### [`funda-quizzes/`](funda-quizzes/SKILL.md)
+
+Write **Funda SA quizzes for finished lesson sets**: one checkpoint quiz per lesson and one topic test per topic, built from the set's exam map and the owner's past papers so a learner who passes them can pass the June, November and Feb/March exams:
+
+- **Runs after `funda-lessons`**: quizzes anchor on stable lesson headings and permanent lesson ids, so they are only written once a set's lessons pass every gate.
+- **Exam-aligned slots** ([craft](funda-quizzes/references/question-craft.md)): difficulty = the guideline's cognitive level, time at the paper's rate per mark, every slot traced to an exam-map line and the paper it adapts.
+- **Variants, not repeats**: every slot has 2+ variants (same skill, steps and difficulty; a different answer) that the app rotates between attempts, and no stem repeats across quizzes, enforced by the repo's repetition audit.
+- **No silliness**: every wrong option is a mistake a half-prepared learner really makes, with feedback and a misconception tag; no joke or filler options, no answer in the stem, real places and case studies instead of "Town A", and titles that never say "quiz".
+- **Diagrams drawn from each variant's own numbers** with the repo's figure library, never cropped from a paper; checked in light and dark.
+- **Gates** ([pipeline](funda-quizzes/references/pipeline.md)): the kit's quiz checker, every answer re-worked by hand, a local load, then a scripted play-through as a test learner. Large jobs fan out to `sonnet` writers with `opus` reviewers sharing one [brief](funda-quizzes/references/agent-brief.md).
+
 ## Installing a skill
 
 Copy a skill directory into your Claude Code skills folder:

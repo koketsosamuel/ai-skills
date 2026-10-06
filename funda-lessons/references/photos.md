@@ -6,7 +6,8 @@ needed (graphics.md has the test), the lesson gets a **placeholder** and the own
 
 ## Why not just grab one
 
-- Copyright: most images online are not free to reuse; textbooks and past papers are copyrighted.
+- Copyright: most images online and in textbooks are not free to reuse. **DBE and provincial past
+  papers are the exception** — the owner has cleared reusing their images (see below).
 - Accuracy: an AI-made "photo" of a specimen, rock or historical scene is a fabrication, and a
   learner cannot tell.
 - Consent: a recognisable child needs written consent from a parent or guardian.
@@ -40,6 +41,31 @@ writePhotoRequests(topicDirPath);      // → <topic-folder>/photos.json
 - The placeholder draws a neutral "Photo coming soon" frame, readable in both themes.
 - Put the teaching in the text around it: a lesson must still make sense before the photo arrives.
 - Ask for a photo only where it earns its place: typically 0–2 per lesson, none in maths.
+
+## Images from past papers — the owner's library
+
+The owner's past-paper library (`~/Documents/past papers`, see exam-alignment.md) may be cropped
+and reused. For each image a lesson needs:
+
+1. **Redraw it if it is a diagram** (graph, circuit, force diagram, apparatus schematic, table,
+   flow chart, food web): an SVG drawn in code is sharp, themes for dark mode and can be labelled
+   to match the lesson. Keep the paper's layout and labels so learners recognise it in the exam.
+2. **Crop it if only the real thing will do** (a photograph, a micrograph, a source cartoon or
+   poster in History, a topographic or orthophoto map extract, a specimen, an artwork):
+   - `pdfimages -list <pdf>` shows embedded images; `pdfimages -f N -l N -png <pdf> <out>` pulls
+     them at full resolution. Prefer this over a page render.
+   - Otherwise render the region: `pdftoppm -f N -l N -r 300 -x X -y Y -W W -H H -png <pdf> <out>`
+     (coordinates in pixels at that resolution), then tighten the crop with Pillow.
+   - Crop out question numbers, marks, watermarks and page furniture; keep only the image.
+   - Look at the crop. Reject it if it is blurry, cut off, or unreadable on a 340 pt wide phone.
+3. Save it uncompressed as `<set>/photos/<id>.png` — the same id as its `photo()` placeholder —
+   and give the placeholder a `shows` that names the source ("Cropped from NSC Nov 2024 Life
+   Sciences P1, Q2.3, page 7 — file ready at photos/<id>.png") and a caption credit
+   ("Source: DBE NSC Nov 2024"). The placeholder stays until the owner uploads the file in the
+   production admin (below); Claude never uploads.
+
+Never alter what an image shows, and never crop a recognisable learner or a person's face from a
+paper unless the paper printed it as a public-figure source (History, Business Studies).
 
 ## After building
 
@@ -87,5 +113,6 @@ The owner can:
 - Wikimedia Commons: public domain, CC0, CC BY, CC BY-SA. CC BY / BY-SA need a credit in the
   caption ("Photo: Jane Doe, CC BY-SA 4.0").
 - Unsplash, Pexels: free licences.
-- Not Google Images, textbook or past-paper scans, news sites, or AI image generators for
-  anything presented as real.
+- DBE and provincial past papers in the owner's library (above).
+- Not Google Images, textbook scans, news sites, or AI image generators for anything presented as
+  real.
